@@ -28,7 +28,6 @@ export class AuthService {
     }
 
     async login(dto: LoginDto) {
-
         const UserData = await this.userModel.findOne({ email: dto.email.toLowerCase() }).exec();
 
         if (!UserData) throw new UnauthorizedException("User not found");
@@ -37,22 +36,25 @@ export class AuthService {
         if (!match) throw new UnauthorizedException("Invalid credentials");
 
         const token = await this.jwt.signAsync({
-            email: dto.email,
+            email: UserData.email,
             userType: UserData.userType,
             name: UserData.name,
             _id: UserData._id,
             sub: UserData._id  // Add standard JWT subject field
-        })
+        });
+
         const user = await this.userModel.findOneAndUpdate({
             _id: UserData._id
         }, {
             token
         }, {
             new: true
-        })
+        });
 
         return {
+            message: 'Login successful',
             data: user,
+            access_token: token
         };
     }
 
@@ -62,28 +64,43 @@ export class AuthService {
 
         const hashpassword = await bcrypt.hash(dto.password, 10);
 
-        const user = await this.userModel.create({
+        // Create user without token first
+        const userData = {
             ...dto,
             email: dto.email.toLowerCase(),
             password: hashpassword,
-        });
-        const payload = await this.jwt.signAsync({
-            email: dto.email,
-            userType: dto.userType,
-            name: dto.name,
+            userType: dto.userType || 'user', // Set default userType if not provided
+        };
+
+        const user = await this.userModel.create(userData);
+
+        // Generate JWT token with user ID
+        const token = await this.jwt.signAsync({
+            email: user.email,
+            userType: user.userType,
+            name: user.name,
             _id: user._id,
             sub: user._id  // Add standard JWT subject field
-        })
-        user.updateOne({
-            token: payload
         });
 
+        // Update user with the generated token
+        const updatedUser = await this.userModel.findOneAndUpdate(
+            { _id: user._id },
+            { token },
+            { new: true }
+        );
+
         return {
-            data: user,
+            message: 'User registered successfully',
+            data: updatedUser,
+            access_token: token
         };
     }
 
     async logout(user: any) {
         await this.userModel.updateOne({ _id: user._id }, { $unset: { token: "" } });
+        return {
+            message: 'Logout successful'
+        };
     }
 }

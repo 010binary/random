@@ -20,8 +20,8 @@ export class User {
     @Prop({ trim: true })
     ProfilePicture?: string;
 
-    @Prop({ required: true })
-    token: string;
+    @Prop()
+    token?: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

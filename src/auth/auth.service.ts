@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
@@ -36,10 +36,13 @@ export class AuthService {
         const match = await bcrypt.compare(dto.password, UserData.password);
         if (!match) throw new UnauthorizedException("Invalid credentials");
 
-        const token = await this.jwt.signAsync({ email: dto.email, userType: UserData.userType, name: UserData.name })
+        const token = await this.jwt.signAsync({ email: dto.email, userType: UserData.userType, name: UserData.name, _id: UserData._id })
         const user = await this.userModel.findOneAndUpdate({
-            $where
+            _id: UserData._id
+        }, {
             token
+        }, {
+            new: true
         })
 
         return {
@@ -48,17 +51,23 @@ export class AuthService {
     }
 
     async register(dto: CreateUserDto) {
+        const exists = await this.userModel.exists({ email: dto.email.toLowerCase() });
+        if (exists) throw new BadRequestException('Email already in use');
+
         const hashpassword = await bcrypt.hash(dto.password, 10);
-        const payload = await this.jwt.signAsync({
-            email: dto.email,
-            userType: dto.userType,
-            name: dto.name
-        })
 
         const user = await this.userModel.create({
             ...dto,
             email: dto.email.toLowerCase(),
             password: hashpassword,
+        });
+        const payload = await this.jwt.signAsync({
+            email: dto.email,
+            userType: dto.userType,
+            name: dto.name,
+            id: user._id
+        })
+        user.updateOne({
             token: payload
         });
 

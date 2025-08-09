@@ -13,14 +13,13 @@ export class UsersController {
         return this.usersService.create(dto);
     }
 
+    @Get('me')
+    getProfile(@Req() req: any) {
+        return req.user;  // User is already fetched by JWT strategy
+    }
+
     @Get(':id')
     get(@Param('id') id: string) {
         return this.usersService.findById(id);
-    }
-
-    @Get('me')
-    getProfile(@Req() req: any) {
-        const x = ""
-        return {};
     }
 }

@@ -36,7 +36,13 @@ export class AuthService {
         const match = await bcrypt.compare(dto.password, UserData.password);
         if (!match) throw new UnauthorizedException("Invalid credentials");
 
-        const token = await this.jwt.signAsync({ email: dto.email, userType: UserData.userType, name: UserData.name, _id: UserData._id })
+        const token = await this.jwt.signAsync({
+            email: dto.email,
+            userType: UserData.userType,
+            name: UserData.name,
+            _id: UserData._id,
+            sub: UserData._id  // Add standard JWT subject field
+        })
         const user = await this.userModel.findOneAndUpdate({
             _id: UserData._id
         }, {
@@ -65,7 +71,8 @@ export class AuthService {
             email: dto.email,
             userType: dto.userType,
             name: dto.name,
-            id: user._id
+            _id: user._id,
+            sub: user._id  // Add standard JWT subject field
         })
         user.updateOne({
             token: payload

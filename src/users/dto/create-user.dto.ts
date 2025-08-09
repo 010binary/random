@@ -1,4 +1,4 @@
-import { IsEmail, IsEnum, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsEnum, IsString, Matches, MinLength } from 'class-validator';
 
 
 enum UserType {
@@ -21,6 +21,7 @@ export class CreateUserDto {
 
     @IsString()
     @MinLength(6)
+    @Matches(/^/, { message: 'Passwords do not match' })
     confirmPassword: string;
 
     @IsEnum(UserType)

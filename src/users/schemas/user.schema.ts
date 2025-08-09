@@ -11,14 +11,17 @@ export class User {
     @Prop({ required: true })
     password: string;
 
-    @Prop({ trim: true })
-    name?: string;
+    @Prop({ required: true })
+    name: string;
 
     @Prop({ enum: ['user', 'creator', 'admin'], default: 'user' })
     userType: string;
 
     @Prop({ trim: true })
     ProfilePicture?: string;
+
+    @Prop({ required: true })
+    token: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

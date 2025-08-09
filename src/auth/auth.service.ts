@@ -27,28 +27,43 @@ export class AuthService {
         return user;
     }
 
-    async login(user: LoginDto) {
+    async login(dto: LoginDto) {
 
-        const UserData = await this.usersService.findByEmail(user.email);
+        const UserData = await this.userModel.findOne({ email: dto.email.toLowerCase() }).exec();
+
         if (!UserData) throw new UnauthorizedException("User not found");
 
-        const match = await bcrypt.compare(user.password, UserData.password);
+        const match = await bcrypt.compare(dto.password, UserData.password);
         if (!match) throw new UnauthorizedException("Invalid credentials");
 
-        const payload = { email: user.email, userType: UserData.userType, name: UserData.name };
+        const token = await this.jwt.signAsync({ email: dto.email, userType: UserData.userType, name: UserData.name })
+        const user = await this.userModel.findOneAndUpdate({
+            $where
+            token
+        })
+
         return {
-            data: UserData,
-            access_token: await this.jwt.signAsync(payload),
+            data: user,
         };
     }
 
-    async register(data: CreateUserDto) {
-        const user = await this.userModel.create(data);
+    async register(dto: CreateUserDto) {
+        const hashpassword = await bcrypt.hash(dto.password, 10);
+        const payload = await this.jwt.signAsync({
+            email: dto.email,
+            userType: dto.userType,
+            name: dto.name
+        })
 
-        const payload = { email: user.email, sub: (user as any)._id?.toString?.() ?? user.id };
+        const user = await this.userModel.create({
+            ...dto,
+            email: dto.email.toLowerCase(),
+            password: hashpassword,
+            token: payload
+        });
+
         return {
             data: user,
-            access_token: await this.jwt.signAsync(payload),
         };
     }
 }

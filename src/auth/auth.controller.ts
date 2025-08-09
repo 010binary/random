@@ -9,10 +9,9 @@ import { CreateUserDto } from 'src/users/dto/create-user.dto';
 export class AuthController {
     constructor(private authService: AuthService) { }
 
-    @UseGuards(LocalAuthGuard)
     @Post('login')
-    async login(@Req() req: any, @Body() _dto: LoginDto) {
-        return this.authService.login(req.user);
+    async login(@Body() _dto: LoginDto) {
+        return this.authService.login(_dto);
     }
 
     @UseGuards(JwtAuthGuard)

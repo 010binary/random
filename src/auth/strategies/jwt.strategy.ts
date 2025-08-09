@@ -25,8 +25,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
         try {
             const user = await this.usersService.findById(userId);
+
             if (!user) {
                 throw new UnauthorizedException('User not found');
+            }
+
+            if (user.token !== payload.token) {
+                throw new UnauthorizedException('Token mismatch');
             }
             return user;
         } catch (error) {

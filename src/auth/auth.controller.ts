@@ -20,4 +20,11 @@ export class AuthController {
     async register(@Body() _dto: CreateUserDto) {
         return this.authService.register(_dto);
     }
+
+    @Post('logout')
+    @HttpCode(HttpStatus.OK)
+    @UseGuards(JwtAuthGuard)
+    async logout(@Req() req: any) {
+        return this.authService.logout(req.user);
+    }
 }

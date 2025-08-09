@@ -82,4 +82,8 @@ export class AuthService {
             data: user,
         };
     }
+
+    async logout(user: any) {
+        await this.userModel.updateOne({ _id: user._id }, { $unset: { token: "" } });
+    }
 }
